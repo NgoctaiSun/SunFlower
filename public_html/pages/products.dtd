@@ -1,0 +1,8 @@
+<!ELEMENT products (product+)>
+<!ELEMENT product (name, brand, price, ram, rom)>
+<!ATTLIST product id ID #REQUIRED>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT brand (#PCDATA)>
+<!ELEMENT price (#PCDATA)>
+<!ELEMENT ram (#PCDATA)>
+<!ELEMENT rom (#PCDATA)>

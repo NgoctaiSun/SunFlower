@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE products SYSTEM "products.dtd">
+<products>
+    <product id="SP001">
+        <name>iPhone 15 Pro Max</name>
+        <brand>Apple</brand>
+        <price>1500000</price>
+        <ram>8GB</ram>
+        <rom>512GB</rom>
+    </product>
+    <product id="SP002">
+        <name>Samsung Galaxy S24 Ultra</name>
+        <brand>Samsung</brand>
+        <price>28990000</price>
+        <ram>12GB</ram>
+        <rom>512GB</rom>
+    </product>
+    <product id="SP003">
+        <name>Xiaomi 14 256GB</name>
+        <brand>Xiaomi</brand>
+        <price>17990000</price>
+        <ram>12GB</ram>
+        <rom>256GB</rom>
+    </product>
+    <product id="SP004">
+        <name>OPPO Reno 12 5G</name>
+        <brand>Oppo</brand>
+        <price>11990000</price>
+        <ram>12GB</ram>
+        <rom>256GB</rom>
+    </product>
+</products>
