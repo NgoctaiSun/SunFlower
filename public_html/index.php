@@ -73,5 +73,6 @@ include 'connect.php';
     <?php include 'pages/footer.php'; ?>
 
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+    <p> xin chao</p>
 </body>
 </html>
