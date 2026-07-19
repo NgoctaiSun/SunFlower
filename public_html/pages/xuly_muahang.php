@@ -3,47 +3,47 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// 1. Kết nối cơ sở dữ liệu store_db của bạn
-$conn = mysqli_connect("localhost", "root", "", "store_db");
+// 1. Kết nối cơ sở dữ liệu hoahuongduongphone chuẩn CSDL
+$conn = mysqli_connect("localhost", "root", "", "hoahuongduongphone");
 
 if (!$conn) {
     die("Kết nối cơ sở dữ liệu thất bại: " . mysqli_connect_error());
 }
 
-// 2. Kiểm tra trạng thái đăng nhập của tài khoản (Khớp với $_SESSION['iduser'] của bạn)
-if (!isset($_SESSION['iduser'])) {
+// 2. Kiểm tra trạng thái đăng nhập dựa trên id tài khoản
+if (!isset($_SESSION['user_id'])) {
     echo "<script>alert('Vui lòng đăng nhập để tiến hành mua hàng!'); window.location.href='index.php?page=login';</script>";
     exit();
 }
 
-$iduser = $_SESSION['iduser'];
+$id_taikhoan = $_SESSION['user_id']; // ID của tài khoản đang đăng nhập
 
 $valid_items = [];
 $tongtien = 0;
-$id_list_string = ""; // Khởi tạo biến để dùng chung khi xóa giỏ hàng
+$id_list_string = ""; // Chuỗi danh sách ID giỏ hàng cần xóa sau khi đặt thành công
 
 /* -------------------------------------------------------------------------- */
 /* LUỒNG 1: MUA NGAY TỪ TRANG CHI TIẾT SẢN PHẨM                               */
 /* -------------------------------------------------------------------------- */
 if(isset($_POST['buy_now'])) 
 { 
-    $idsp = intval($_POST['idsp']);
-    $soluong = intval($_POST['so_luong']); // Đồng bộ tên biến ô nhập so_luong của bạn
+    $id_sanpham = intval($_POST['idsp']);
+    $soluong_mua = intval($_POST['so_luong']); 
 
-    if($soluong <= 0){
-        $soluong = 1;
+    if($soluong_mua <= 0){
+        $soluong_mua = 1;
     }
 
-    // Truy vấn bảng products và cột idsp của bạn
-    $sql_sp = mysqli_query($conn,"
+    // Truy vấn chính xác từ bảng `sanpham`
+    $sql_sp = mysqli_query($conn, "
         SELECT *
-        FROM products
-        WHERE idsp='$idsp' AND trang_thai = 1
+        FROM sanpham
+        WHERE id = '$id_sanpham'
     ");
 
     if(mysqli_num_rows($sql_sp) == 0){
         echo "<script>
-                alert('Sản phẩm không tồn tại hoặc đã bị ẩn!');
+                alert('Sản phẩm không tồn tại trên hệ thống!');
                 history.back();
               </script>";
         exit();
@@ -51,8 +51,8 @@ if(isset($_POST['buy_now']))
 
     $sp = mysqli_fetch_assoc($sql_sp);
 
-    // Kiểm tra số lượng tồn kho (cột so_luong của bạn)
-    if($soluong > $sp['so_luong']){
+    // Kiểm tra số lượng tồn kho (cột `soluong`)
+    if($soluong_mua > $sp['soluong']){
         echo "<script>
                 alert('Sản phẩm không đủ số lượng tồn kho!');
                 history.back();
@@ -60,14 +60,14 @@ if(isset($_POST['buy_now']))
         exit();
     }
 
-    $tongtien = $sp['gia'] * $soluong;
+    $tongtien = $sp['gia'] * $soluong_mua;
 
     $valid_items[] = [
-        'idsp' => $sp['idsp'],
+        'id_sanpham' => $sp['id'],
         'ten' => $sp['ten'],
-        'so_luong_mua' => $soluong,
+        'soluong_mua' => $soluong_mua,
         'gia' => $sp['gia'],
-        'so_luong_kho' => $sp['so_luong']
+        'soluong_kho' => $sp['soluong']
     ];
 }
 /* -------------------------------------------------------------------------- */
@@ -86,19 +86,19 @@ else
     $selected_cart_ids = $_POST['cart_items'];
     $id_list_string = implode(",", array_map('intval', $selected_cart_ids));
 
-    // Đồng bộ: bảng `cart` nối với `products` qua `idsp`, điều kiện `iduser`
+    // Truy vấn kết hợp bảng `giohang` và bảng `sanpham` chuẩn CSDL của bạn
     $sql_cart = "
         SELECT
-            c.id AS id_cart,
-            c.so_luong AS so_luong_mua,
-            p.idsp,
-            p.ten,
-            p.gia,
-            p.so_luong AS so_luong_kho
-        FROM cart c
-        JOIN products p ON c.idsp = p.idsp
-        WHERE c.iduser='$iduser'
-        AND c.id IN ($id_list_string)
+            g.id AS id_cart,
+            g.soluong AS soluong_mua,
+            s.id AS id_sanpham,
+            s.ten,
+            s.gia,
+            s.soluong AS soluong_kho
+        FROM giohang g
+        JOIN sanpham s ON g.id_sanpham = s.id
+        WHERE g.id_taikhoan = '$id_taikhoan'
+        AND g.id IN ($id_list_string)
     ";
 
     $result_cart = mysqli_query($conn, $sql_cart);
@@ -113,63 +113,65 @@ else
 
     while($item = mysqli_fetch_assoc($result_cart))
     {
-        if($item['so_luong_mua'] > $item['so_luong_kho'])
+        if($item['soluong_mua'] > $item['soluong_kho'])
         {
             echo "<script>
-                    alert('Sản phẩm ".$item['ten']." không đủ hàng trong kho (Hiện còn: ".$item['so_luong_kho']."). Vui lòng kiểm tra lại!');
+                    alert('Sản phẩm ".$item['ten']." không đủ hàng trong kho (Hiện còn: ".$item['soluong_kho']."). Vui lòng kiểm tra lại!');
                     window.location.href='index.php?page=cart';
                   </script>";
             exit();
         }
 
-        $tongtien += $item['gia'] * $item['so_luong_mua'];
+        $tongtien += $item['gia'] * $item['soluong_mua'];
         $valid_items[] = $item;
     }
 }
 
 /* -------------------------------------------------------------------------- */
-/* TIẾN HÀNH TẠO ĐƠN HÀNG VÀ LƯU CHI TIẾT                                    */
+/* TIẾN HÀNH TẠO ĐƠN HÀNG VÀ LƯU CHI TIẾT ĐƠN HÀNG                            */
 /* -------------------------------------------------------------------------- */
 
-// 5. Lấy thông tin từ bảng `users` bằng `iduser` của bạn để làm thông tin nhận hàng
-$sql_user = mysqli_query($conn, "SELECT * FROM users WHERE iduser = '$iduser'");
+// 5. Lấy thông tin mặc định từ bảng `taikhoan` của người mua
+$sql_user = mysqli_query($conn, "SELECT * FROM taikhoan WHERE id = '$id_taikhoan'");
 $user_info = mysqli_fetch_assoc($sql_user);
 
-$ten_nguoi_nhan    = mysqli_real_escape_string($conn, $user_info['ten']);
-$sdt_nguoi_nhan    = mysqli_real_escape_string($conn, $user_info['sdt']);
-$dia_chi_giao_hang = mysqli_real_escape_string($conn, !empty($user_info['dia_chi']) ? $user_info['dia_chi'] : 'Chưa cập nhật địa chỉ');
-$trang_thai        = 0; // 0: Chờ xử lý / Chờ xác nhận theo cấu trúc số của bạn
+$tennguoinhan   = mysqli_real_escape_string($conn, $user_info['ten']);
+$sdtnhan        = mysqli_real_escape_string($conn, $user_info['sdt']);
+$diachigiaohang = mysqli_real_escape_string($conn, !empty($user_info['diachi']) ? $user_info['diachi'] : 'Chưa cập nhật địa chỉ');
+$thanhtoan      = "COD (Thanh toán khi nhận hàng)"; // Giá trị đồng bộ theo dữ liệu mẫu của bạn
+$trangthai      = "Chờ xác nhận"; // Đồng bộ dạng chuỗi chữ khớp với trang Admin
 
-// 6. Thêm thông tin vào bảng `orders` (Khớp tên các cột trong bài của bạn)
-$sql_order = "INSERT INTO orders (iduser, ten_nguoi_nhan, sdt_nguoi_nhan, dia_chi_giao_hang, tong_tien, trang_thai, ngay_mua) 
-              VALUES ('$iduser', '$ten_nguoi_nhan', '$sdt_nguoi_nhan', '$dia_chi_giao_hang', '$tongtien', '$trang_thai', NOW())";
+// 6. Thêm thông tin vào bảng `donhang` (Khớp 100% cột CSDL thực tế)
+$sql_order = "INSERT INTO donhang (id_taikhoan, ngaymua, tongtien, trangthai, diachigiaohang, tennguoinhan, sdtnhan, thanhtoan) 
+              VALUES ('$id_taikhoan', NOW(), '$tongtien', '$trangthai', '$diachigiaohang', '$tennguoinhan', '$sdtnhan', '$thanhtoan')";
 
 if (mysqli_query($conn, $sql_order)) {
-    // Lấy ID tự động tăng của đơn hàng vừa tạo thành công
-    $id_order_moi = mysqli_insert_id($conn);
+    // Lấy ID tự tăng vừa tạo của đơn hàng này
+    $id_donhang_moi = mysqli_insert_id($conn);
     
-    // 7. Vòng lặp lưu thông tin sản phẩm vào bảng `order_details` và thực hiện trừ kho
+    // 7. Vòng lặp lưu thông tin từng sản phẩm vào bảng `chitietdonhang` và trừ kho
     foreach ($valid_items as $product) {
-        $idsp   = $product['idsp'];
-        $sl_mua  = $product['so_luong_mua'];
-        $gia_ban = $product['gia'];
+        $id_sanpham  = $product['id_sanpham'];
+        $soluong_mua = $product['soluong_mua'];
+        $dongia      = $product['gia'];
         
-        $sql_detail = "INSERT INTO order_details (id_order, idsp, so_luong, gia) 
-                       VALUES ('$id_order_moi', '$idsp', '$sl_mua', '$gia_ban')";
+        // Lưu vào bảng chi tiết đơn hàng
+        $sql_detail = "INSERT INTO chitietdonhang (id_donhang, id_sanpham, soluong, dongia) 
+                       VALUES ('$id_donhang_moi', '$id_sanpham', '$soluong_mua', '$dongia')";
         mysqli_query($conn, $sql_detail);
                              
-        // Khấu trừ đi số lượng tồn kho thực tế của sản phẩm
-        mysqli_query($conn, "UPDATE products SET so_luong = so_luong - $sl_mua WHERE idsp = '$idsp'");
+        // Thực hiện trừ đi số lượng tồn kho của sản phẩm trong bảng `sanpham`
+        mysqli_query($conn, "UPDATE sanpham SET soluong = soluong - $soluong_mua WHERE id = '$id_sanpham'");
     }
     
-    // 8. DỌN SẠCH GIỎ HÀNG: Chỉ xóa duy nhất những sản phẩm vừa tích chọn thanh toán thành công (Luồng 2)
+    // 8. XÓA GIỎ HÀNG: Chỉ xóa những sản phẩm vừa được mua thành công ở Luồng 2
     if(!isset($_POST['buy_now']) && !empty($id_list_string)) {
-        mysqli_query($conn, "DELETE FROM cart WHERE iduser='$iduser' AND id IN ($id_list_string)");
+        mysqli_query($conn, "DELETE FROM giohang WHERE id_taikhoan = '$id_taikhoan' AND id IN ($id_list_string)");
     }
 
     echo "<script>alert('Đơn hàng của bạn đã được tạo thành công!'); window.location.href='index.php?page=home';</script>";
 } else {
-    echo "<script>alert('Có lỗi hệ thống phát sinh khi đặt hàng: " . mysqli_error($conn) . "'); window.location.href='index.php?page=cart';</script>";
+    echo "<script>alert('Có lỗi hệ thống phát sinh khi tạo đơn hàng: " . mysqli_error($conn) . "'); window.location.href='index.php?page=cart';</script>";
 }
 
 mysqli_close($conn);

@@ -182,7 +182,7 @@ $list_products = mysqli_query($conn, "SELECT * FROM sanpham ORDER BY id DESC");
                             <th width="35%">Thông tin sản phẩm</th>
                             <th width="18%" class="text-end">Giá bán</th>
                             <th width="12%" class="text-center">Kho hàng</th>
-                            <th width="15%" class="text-center">Hành động</th>
+                            <th width="25%" class="text-center">Hành động</th> <!-- Tăng độ rộng cột hành động lên 25% để không bị vỡ nút -->
                         </tr>
                     </thead>
                     <tbody>
@@ -215,13 +215,27 @@ $list_products = mysqli_query($conn, "SELECT * FROM sanpham ORDER BY id DESC");
                                 <?php endif; ?>
                             </td>
                             <td class="text-center">
-                                <div class="d-flex gap-1 justify-content-center">
+                                <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                    <!-- Nút Sửa -->
                                     <a href="admin.php?action=sanpham&edit_sp=<?= $row['id'] ?>" class="btn btn-sm btn-outline-primary shadow-sm" title="Sửa sản phẩm">
                                         <i class="fa-solid fa-pen-to-square"></i> Sửa
                                     </a>
+                                    
+                                    <!-- Nút Xóa -->
                                     <a href="admin.php?action=sanpham&delete_sp=<?= $row['id'] ?>" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm [ <?= htmlspecialchars($row['ten']) ?> ] và dọn sạch sản phẩm này khỏi giỏ hàng của khách?')" title="Xóa sản phẩm">
                                         <i class="fa-solid fa-trash"></i> Xóa
                                     </a>
+
+                                    <!-- Nút Hiện/Ẩn (Đã sửa lại class chuẩn Bootstrap) -->
+                                    <?php if(isset($row['hienthi']) && $row['hienthi'] == 0){ ?>
+                                        <a href="lay.php?id=<?= $row['id'] ?>&action=show" class="btn btn-sm btn-outline-success shadow-sm" title="Hiện sản phẩm">
+                                            <i class="fa-solid fa-eye"></i> Hiện
+                                        </a>
+                                    <?php } else { ?>
+                                        <a href="lay.php?id=<?= $row['id'] ?>&action=hide" class="btn btn-sm btn-outline-secondary shadow-sm" title="Ẩn sản phẩm">
+                                            <i class="fa-solid fa-eye-slash"></i> Ẩn
+                                        </a>
+                                    <?php } ?>
                                 </div>
                             </td>
                         </tr>

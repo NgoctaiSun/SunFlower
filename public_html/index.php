@@ -73,8 +73,5 @@ include 'connect.php';
     <?php include 'pages/footer.php'; ?>
 
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
-    <p> xin chao</p>
-    <p>Thien1</p>
-    <p>Vinh</p>
 </body>
 </html>

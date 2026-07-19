@@ -15,7 +15,7 @@ if (!isset($_SESSION['user_id'])) {
     return;
 }
 
-include_once 'pages/connect.php';
+
 if (!isset($conn)) {
     $conn = mysqli_connect("localhost", "root", "", "hoahuongduongphone");
 }
