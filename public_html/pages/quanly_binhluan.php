@@ -33,39 +33,50 @@ $result = mysqli_query($conn, $sql);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = mysqli_fetch_assoc($result)): ?>
-                    <tr>
-                        <td class="fw-bold text-secondary">#<?= $row['id'] ?></td>
-                        <td class="fw-semibold text-dark"><?= htmlspecialchars($row['ten_taikhoan']) ?></td>
-                        <td class="text-primary fw-medium"><?= htmlspecialchars($row['ten_sanpham']) ?></td>
-                        <td><p class="mb-0 text-muted small" style="max-width: 300px;"><?= htmlspecialchars($row['noidung']) ?></p></td>
-                        <td>
-                            <span class="text-warning fw-bold">
-                                <?= $row['sosao'] ?> <i class="fa-solid fa-star text-warning"></i>
-                            </span>
-                        </td>
-                        <td>
-                            <?php if ($row['trangthai'] == '1' || $row['trangthai'] == 'Hiển thị'): ?>
-                                <span class="badge bg-success rounded-pill px-2 py-1">Đang hiển thị</span>
-                            <?php else: ?>
-                                <span class="badge bg-secondary rounded-pill px-2 py-1">Đang ẩn</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-center">
-                            <div class="d-flex justify-content-center gap-2">
-                                <a href="kiemsoat_binhluan.php?action=toggle_status&id=<?= $row['id'] ?>&current=<?= $row['trangthai'] ?>" ...
-                                   class="btn btn-sm btn-outline-secondary" title="Ẩn / Hiện bình luận">
-                                    <i class="fa-solid <?= ($row['trangthai'] == '1' || $row['trangthai'] == 'Hiển thị') ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
-                                </a>
-                                <a href="kiemsoat_binhluan.php?action=delete&id=<?= $row['id'] ?>" ...
-                                   class="btn btn-sm btn-outline-danger" 
-                                   onclick="return confirm('Bạn có chắc muốn xóa vĩnh viễn đánh giá này không?')">
-                                    <i class="fa-solid fa-trash"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
+                    <?php if (mysqli_num_rows($result) > 0): ?>
+                        <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                        <tr>
+                            <td class="fw-bold text-secondary">#<?= $row['id'] ?></td>
+                            <td class="fw-semibold text-dark"><?= htmlspecialchars($row['ten_taikhoan']) ?></td>
+                            <td class="text-primary fw-medium"><?= htmlspecialchars($row['ten_sanpham']) ?></td>
+                            <td><p class="mb-0 text-muted small" style="max-width: 300px;"><?= htmlspecialchars($row['noidung']) ?></p></td>
+                            <td>
+                                <span class="text-warning fw-bold">
+                                    <?= $row['sosao'] ?> <i class="fa-solid fa-star text-warning"></i>
+                                </span>
+                            </td>
+                            <td>
+                                <?php if ($row['trangthai'] == '1' || $row['trangthai'] == 'Hiển thị'): ?>
+                                    <span class="badge bg-success rounded-pill px-2 py-1">Đang hiển thị</span>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary rounded-pill px-2 py-1">Đang ẩn</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <!-- Nút Ẩn / Hiện bình luận cho Admin -->
+                                    <a href="kiemsoat_binhluan.php?action=toggle_status&id=<?= $row['id'] ?>&current=<?= $row['trangthai'] ?>" 
+                                       class="btn btn-sm <?= ($row['trangthai'] == '1' || $row['trangthai'] == 'Hiển thị') ? 'btn-outline-warning' : 'btn-outline-success' ?>" 
+                                       title="<?= ($row['trangthai'] == '1' || $row['trangthai'] == 'Hiển thị') ? 'Ẩn bình luận này' : 'Hiện bình luận này' ?>">
+                                        <i class="fa-solid <?= ($row['trangthai'] == '1' || $row['trangthai'] == 'Hiển thị') ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
+                                    </a>
+
+                                    <!-- Nút Xóa bình luận -->
+                                    <a href="kiemsoat_binhluan.php?action=delete&id=<?= $row['id'] ?>" 
+                                       class="btn btn-sm btn-outline-danger" 
+                                       title="Xóa vĩnh viễn"
+                                       onclick="return confirm('Bạn có chắc muốn xóa vĩnh viễn đánh giá này không?')">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Chưa có bình luận nào trong hệ thống.</td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
