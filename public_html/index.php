@@ -74,5 +74,6 @@ include 'connect.php';
 
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
     <p>Thử nghiệm</p>
+    <p>Tận 1</p>
 </body>
 </html>
