@@ -14,6 +14,17 @@ if (!isset($conn)) {
         $conn = mysqli_connect("localhost", "root", "", "hoahuongduongphone");
     }
 }
+
+// YÊU CẦU 6: Đếm số lượng sản phẩm trong giỏ hàng của người dùng đang đăng nhập
+$cart_badge_count = 0;
+if (isset($_SESSION['user_id']) && isset($conn)) {
+    $uid_badge = $_SESSION['user_id'];
+    $res_badge = mysqli_query($conn, "SELECT SUM(soluong) AS total FROM giohang WHERE id_taikhoan = '$uid_badge'");
+    if ($res_badge) {
+        $row_badge = mysqli_fetch_assoc($res_badge);
+        $cart_badge_count = $row_badge['total'] ? intval($row_badge['total']) : 0;
+    }
+}
 ?>
 <header class="bg-success shadow">
     <style>
@@ -62,14 +73,20 @@ if (!isset($conn)) {
                     <li class="nav-item px-2">
                         <a class="nav-link text-white" href="index.php?page=lienhe">Liên hệ</a>
                     </li>
+                    
+                    <!-- THÊM BADGE HIỂN THỊ SỐ LƯỢNG GIỎ HÀNG THỜI GIAN THỰC -->
                     <li class="nav-item px-2">
-                        <a class="nav-link text-white position-relative" href="index.php?page=giohang">
+                        <a class="nav-link text-white position-relative d-inline-block" href="index.php?page=giohang">
                             <i class="fa-solid fa-basket-shopping fs-5"></i> Giỏ hàng
+                            <?php if ($cart_badge_count > 0): ?>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light">
+                                    <?= $cart_badge_count ?>
+                                    <span class="visually-hidden">Sản phẩm trong giỏ</span>
+                                </span>
+                            <?php endif; ?>
                         </a>
                     </li>
-                    <li class="nav-item">
-    <a class="nav-link" href="index.php?page=bang_gia_xml">Bảng giá XML</a>
-</li>
+
                     <?php if(isset($_SESSION['user'])): ?>
                         <li class="nav-item dropdown px-2">
                             <a class="nav-link dropdown-toggle text-white fw-bold d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
