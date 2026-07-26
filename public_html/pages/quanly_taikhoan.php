@@ -1,5 +1,5 @@
 <?php
-include_once '../pages/connect.php';
+include_once '../connect.php';
 if (!isset($conn)) {
     $conn = mysqli_connect("localhost", "root", "", "hoahuongduongphone");
 }
