@@ -169,7 +169,7 @@ if (mysqli_query($conn, $sql_order)) {
         mysqli_query($conn, "DELETE FROM giohang WHERE id_taikhoan = '$id_taikhoan' AND id IN ($id_list_string)");
     }
 
-    echo "<script>alert('Đơn hàng của bạn đã được tạo thành công!'); window.location.href='index.php?page=home';</script>";
+    echo "<script>alert('Đơn hàng của bạn đã được tạo thành công!'); window.location.href='../index.php?page=home';</script>";
 } else {
     echo "<script>alert('Có lỗi hệ thống phát sinh khi tạo đơn hàng: " . mysqli_error($conn) . "'); window.location.href='index.php?page=cart';</script>";
 }
