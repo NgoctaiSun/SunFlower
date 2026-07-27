@@ -1,6 +1,7 @@
 <?php
 if (!isset($conn)) {
     $conn = mysqli_connect("localhost","root","","hoahuongduongphone"); 
+    mysqli_set_charset($conn, "utf8mb4");
 }
 
 if (!isset($_GET['id'])) {
@@ -26,12 +27,20 @@ $sql_dg = "SELECT bl.*, tk.ten FROM binhluan bl
            ORDER BY bl.ngaydang DESC";
 $result_dg = mysqli_query($conn, $sql_dg);
 
-// Kiểm tra thông tin người dùng đăng nhập
+// Kiểm tra thông tin người dùng đăng nhập & lấy thông tin chi tiết để điền vào Modal
 $iduser = 0;
+$user_info = [];
 if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
     $iduser = intval($_SESSION['user_id']);
 } elseif (isset($_SESSION['user']['id'])) {
     $iduser = intval($_SESSION['user']['id']);
+}
+
+if ($iduser > 0) {
+    $user_query = mysqli_query($conn, "SELECT * FROM taikhoan WHERE id = '{$iduser}'");
+    if ($user_query && mysqli_num_rows($user_query) > 0) {
+        $user_info = mysqli_fetch_assoc($user_query);
+    }
 }
 
 $da_mua_hang = false;
@@ -158,13 +167,17 @@ if ($iduser > 0) {
                     </div>
 
                     <div class="col-sm-6">
-                        <form action="pages/xuly_muahang.php" method="POST">
-                            <input type="hidden" name="idsp" value="<?= $sp['id'] ?>">
-                            <input type="hidden" name="soluong" id="qty_buy" value="1">
-                            <button type="submit" name="buy_now" class="btn btn-success btn-lg w-100 py-3 fw-bold rounded-pill shadow-sm">
+                        <?php if ($iduser > 0): ?>
+                            <!-- Nếu đã đăng nhập: Bấm nút sẽ bật Modal Popup xác nhận -->
+                            <button type="button" id="btnOpenBuyNowModal" class="btn btn-success btn-lg w-100 py-3 fw-bold rounded-pill shadow-sm">
                                 <i class="fa-solid fa-bolt me-2"></i>Mua ngay
                             </button>
-                        </form>
+                        <?php else: ?>
+                            <!-- Nếu chưa đăng nhập: Chuyển sang trang Login -->
+                            <a href="index.php?page=login" class="btn btn-success btn-lg w-100 py-3 fw-bold rounded-pill shadow-sm text-center" onclick="return confirm('Vui lòng đăng nhập để mua hàng!')">
+                                <i class="fa-solid fa-bolt me-2"></i>Mua ngay
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -177,7 +190,6 @@ if ($iduser > 0) {
                     <h4 class="fw-bold text-success mb-3"><i class="fa-solid fa-pen-to-square me-2"></i>Viết đánh giá của bạn</h4>
                     
                     <?php if ($da_mua_hang && !$da_binh_luan): ?>
-                        <!-- TH1: ĐÃ MUA HÀNG VÀ CHƯA BÌNH LUẬN -> CHO PHÉP ĐÁNH GIÁ -->
                         <form action="pages/xuly_binhluan.php" method="POST">
                             <input type="hidden" name="idsp" value="<?= $sp['id'] ?>">
                             
@@ -203,14 +215,12 @@ if ($iduser > 0) {
                         </form>
 
                     <?php elseif ($da_binh_luan): ?>
-                        <!-- TH2: ĐÃ BÌNH LUẬN RỒI -> THÔNG BÁO CHẶN -->
                         <div class="alert alert-info mb-0 rounded-3 border-0 shadow-sm p-3">
                             <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-circle-check me-2 text-info"></i>Bạn đã bình luận sản phẩm này rồi!</h6>
                             <p class="small text-muted mb-0">Mỗi tài khoản chỉ được phép gửi bình luận 1 lần cho mỗi sản phẩm.</p>
                         </div>
 
                     <?php else: ?>
-                        <!-- TH3: CHƯA MUA HÀNG HOẶC CHƯA ĐĂNG NHẬP -> THÔNG BÁO CHẶN -->
                         <div class="alert alert-warning mb-0 rounded-3 border-0 shadow-sm p-3">
                             <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-triangle-exclamation me-2 text-warning"></i>Bạn chưa thể đánh giá sản phẩm này!</h6>
                             <p class="small text-muted mb-3">Chỉ những khách hàng đã mua sản phẩm này và nhận hàng thành công mới có thể viết đánh giá.</p>
@@ -240,7 +250,6 @@ if ($iduser > 0) {
                                 <div class="review-content mt-1 d-flex justify-content-between align-items-center">
                                     <span><?= nl2br(htmlspecialchars($dg['noidung'])) ?></span>
                                     
-                                    <!-- HIỂN THỊ NÚT SỬA BÌNH LUẬN (CHO CHÍNH CHỦ VÀ CHƯA SỬA LẦN NÀO) -->
                                     <?php if ($iduser > 0 && $iduser == $dg['id_taikhoan']): ?>
                                         <?php if (isset($dg['solansua']) && $dg['solansua'] < 1): ?>
                                             <button type="button" class="btn btn-sm btn-outline-primary ms-2 rounded-pill px-3" 
@@ -260,6 +269,97 @@ if ($iduser > 0) {
                     <?php endif; ?>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL POPUP XÁC NHẬN VÀ SỬA THÔNG TIN MUA NGAY -->
+<div class="modal fade" id="confirmBuyNowModal" tabindex="-1" aria-labelledby="buyNowModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold" id="buyNowModalLabel">
+                    <i class="fa-solid fa-pen-to-square me-2"></i>Xác Nhận & Sửa Thông Tin Giao Hàng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="pages/xuly_muahangngay.php" method="POST">
+                <input type="hidden" name="idsp" value="<?= $sp['id'] ?>">
+                <input type="hidden" name="soluong" value="1">
+                <input type="hidden" name="buy_now" value="1">
+
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <!-- CỘT TRÁI: NHẬP VÀ SỬA THÔNG TIN -->
+                        <div class="col-md-6 border-end pe-md-4">
+                            <h6 class="fw-bold text-success border-bottom pb-2 mb-3">
+                                <i class="fa-solid fa-user-pen me-1"></i>Thông tin người nhận (Có thể chỉnh sửa):
+                            </h6>
+                            
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold mb-1">Họ và tên người nhận:</label>
+                                <input type="text" name="hoten_order" class="form-control form-control-sm" 
+                                       value="<?= htmlspecialchars($user_info['hoten'] ?? $user_info['ten'] ?? $_SESSION['user'] ?? '') ?>" required>
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold mb-1">Số điện thoại liên hệ:</label>
+                                <input type="tel" name="sdt_order" class="form-control form-control-sm" 
+                                       value="<?= htmlspecialchars($user_info['sdt'] ?? '') ?>" 
+                                       placeholder="Nhập số điện thoại nhận hàng" required>
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold mb-1">Email nhận thông báo / hóa đơn:</label>
+                                <input type="email" name="email_order" class="form-control form-control-sm" 
+                                       value="<?= htmlspecialchars($user_info['email'] ?? '') ?>" 
+                                       placeholder="example@gmail.com" required>
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold mb-1">Địa chỉ giao hàng chi tiết:</label>
+                                <textarea name="diachi_order" class="form-control form-control-sm" rows="3" 
+                                          placeholder="Số nhà, đường, phường/xã, quận/huyện..." required><?= htmlspecialchars($user_info['diachi'] ?? '') ?></textarea>
+                            </div>
+                        </div>
+
+                        <!-- CỘT PHẢI: XEM LẠI SẢN PHẨM & TỔNG TIỀN -->
+                        <div class="col-md-6 ps-md-4">
+                            <h6 class="fw-bold text-success border-bottom pb-2 mb-3">
+                                <i class="fa-solid fa-bag-shopping me-1"></i>Sản phẩm thanh toán ngay:
+                            </h6>
+                            
+                            <div class="card p-3 border mb-3 bg-light rounded-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="images/<?= htmlspecialchars($sp['hinhanh']) ?>" 
+                                         alt="<?= htmlspecialchars($sp['ten']) ?>" 
+                                         style="width: 70px; height: 70px; object-fit: contain;">
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1"><?= htmlspecialchars($sp['ten']) ?></h6>
+                                        <div class="text-secondary small">
+                                            Đơn giá: <span class="text-danger fw-bold"><?= number_format($sp['gia'], 0, ',', '.') ?> VNĐ</span>
+                                        </div>
+                                        <div class="text-secondary small">
+                                            Số lượng: <strong>1</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-warning bg-opacity-10 p-3 rounded-3 border border-warning text-center">
+                                <span class="fw-semibold text-dark d-block mb-1">Tổng tiền thanh toán:</span>
+                                <span class="fw-bold text-danger fs-4"><?= number_format($sp['gia'], 0, ',', '.') ?> VNĐ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill fw-semibold" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success rounded-pill fw-bold px-4">
+                        <i class="fa-solid fa-check me-1"></i>Xác Nhận Đặt Hàng
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -291,6 +391,16 @@ if ($iduser > 0) {
 </div>
 
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const btnOpenBuyNowModal = document.getElementById("btnOpenBuyNowModal");
+    if (btnOpenBuyNowModal) {
+        const confirmBuyNowModal = new bootstrap.Modal(document.getElementById('confirmBuyNowModal'));
+        btnOpenBuyNowModal.addEventListener("click", function () {
+            confirmBuyNowModal.show();
+        });
+    }
+});
+
 // Hàm bật Modal Popup Chỉnh sửa bình luận
 function openEditModal(id, noidung) {
     document.getElementById('edit_id_binhluan').value = id;
