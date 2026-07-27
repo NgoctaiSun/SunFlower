@@ -40,6 +40,7 @@ $result = mysqli_query($conn,$sql);
                 <tr>
                     <th>Mã đơn</th>
                     <th>Ngày mua</th>
+                    <th>Tên sản phẩm</th>
                     <th>Tổng tiền</th>
                     <th>Người nhận</th>
                     <th>SĐT</th>
@@ -62,6 +63,26 @@ $result = mysqli_query($conn,$sql);
                         <?= $row['ngaymua']; ?>
                     </td>
 
+                    <td>
+                        <?php
+                        $id_donhang = $row['id'];
+
+                        $sql_sanpham = "
+                        SELECT sp.ten
+                        FROM chitietdonhang ctdh
+                        JOIN sanpham sp ON ctdh.id_sanpham = sp.id
+                        WHERE ctdh.id_donhang = '$id_donhang'
+                        ";
+
+                        $result_sanpham = mysqli_query($conn, $sql_sanpham);
+
+                        $tensanpham_list = [];
+                        while ($row_sanpham = mysqli_fetch_assoc($result_sanpham)) {
+                                 $tensanpham_list[] = $row_sanpham['ten'];}
+
+                        echo implode(", ", $tensanpham_list);
+                        ?>
+                    </td>
                     <td class="text-danger fw-bold">
                         <?= number_format($row['tongtien'],0,',','.'); ?> đ
                     </td>
