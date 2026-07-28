@@ -1,4 +1,5 @@
 <?php
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -313,3 +314,26 @@ $action = $_GET['action'] ?? 'dashboard';
 <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+<!-- Cần đảm bảo đã thư viện SweetAlert2 đã được nhúng -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<?php if (isset($_GET['status'])): ?>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    <?php if ($_GET['status'] == 'update_success'): ?>
+        Swal.fire({
+            toast: true,
+            position: 'top-right',
+            icon: 'success',
+            title: 'Cập nhật trạng thái thành công!',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    <?php endif; ?>
+});
+const url = new URL(window.location.href);
+    url.searchParams.delete('status');
+    window.history.replaceState({}, document.title, url.toString());
+</script>
+<?php endif; ?>

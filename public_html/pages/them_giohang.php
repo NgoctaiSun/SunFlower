@@ -3,23 +3,45 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// ĐÃ SỬA: Nhúng đúng file connect.php vì nó nằm cùng thư mục pages/ với file này
+// Nhúng file kết nối cơ sở dữ liệu
 include_once 'connect.php'; 
 
 if (!isset($conn)) {
     $conn = mysqli_connect("localhost", "root", "", "hoahuongduongphone");
 }
 
-// Kiểm tra xem người dùng đã đăng nhập chưa
+// 1. KIỂM TRA CHƯA ĐĂNG NHẬP: Hiển thị SweetAlert2 cảnh báo rồi chuyển hướng sang trang Login
 if (!isset($_SESSION['user_id'])) {
-    echo "<script>
-        alert('Vui lòng đăng nhập để thực hiện chức năng này!');
-        window.location.href = 'index.php?page=login';
-    </script>";
+    ?>
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    </head>
+    <body>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-right',
+                    icon: 'warning',
+                    title: 'Vui lòng đăng nhập để thực hiện chức năng này!',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                }).then(function() {
+                    window.location.href = 'index.php?page=login';
+                });
+            });
+        </script>
+    </body>
+    </html>
+    <?php
     exit();
 }
 
-// Xử lý thêm sản phẩm vào giỏ hàng
+// 2. XỬ LÝ THÊM SẢN PHẨM VÀO GIỎ HÀNG
 if (isset($_GET['id_sanpham'])) {
     $id_taikhoan = $_SESSION['user_id'];
     $id_sanpham = intval($_GET['id_sanpham']);
@@ -35,11 +57,33 @@ if (isset($_GET['id_sanpham'])) {
         mysqli_query($conn, "INSERT INTO giohang(id_taikhoan, id_sanpham, soluong) VALUES ('$id_taikhoan', '$id_sanpham', '$soluong')");
     }
 
-    // ĐÃ SỬA: Điều hướng chuẩn về trang giỏ hàng tại file index gốc
-    echo "<script>
-        alert('Đã thêm sản phẩm vào giỏ hàng thành công!');
-        window.location.href = 'index.php?page=giohang';
-    </script>";
+    // Hiển thị thông báo Toast thành công ở góc phải trên rồi chuyển hướng về Giỏ hàng
+    ?>
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    </head>
+    <body>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-right',
+                    icon: 'success',
+                    title: 'Đã thêm sản phẩm vào giỏ hàng!',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                }).then(function() {
+                    window.location.href = 'index.php?page=giohang';
+                });
+            });
+        </script>
+    </body>
+    </html>
+    <?php
     exit();
 } else {
     header("Location: index.php");

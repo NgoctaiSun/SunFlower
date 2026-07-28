@@ -163,7 +163,7 @@ document.addEventListener("DOMContentLoaded", function() {
             toast: true,
             position: 'top-right',
             icon: 'success',
-            title: 'Thay đổi !',
+            title: 'Thay đổi thành công!',
             showConfirmButton: false,
             timer: 3000,
             timerProgressBar: true
@@ -171,13 +171,18 @@ document.addEventListener("DOMContentLoaded", function() {
     <?php elseif ($_GET['status'] == 'deleted_success'): ?>
         // Thông báo Popup giữa màn hình khi xóa
         Swal.fire({
+            toast: true,
+            position: 'top-right',
             icon: 'success',
-            title: 'Đã xóa!',
-            text: 'Bình luận đã được xóa vĩnh viễn.',
-            confirmButtonColor: '#198754',
-            confirmButtonText: 'Đồng ý'
+            title: 'Đã xóa thành công !',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
         });
     <?php endif; ?>
 });
+const url = new URL(window.location.href);
+    url.searchParams.delete('status');
+    window.history.replaceState({}, document.title, url.toString());
 </script>
 <?php endif; ?>

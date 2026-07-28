@@ -53,18 +53,20 @@ if (isset($_POST['luusanpham'])) {
                         hang='$hang', 
                         hinhanh='$image_name' 
                        WHERE id='$id_updating'";
-        $msg = "Cập nhật sản phẩm thành công!";
+        $status_redirect = "update_success";
     } else {
         // Thực hiện câu lệnh THÊM MỚI (INSERT)
         $sql_action = "INSERT INTO sanpham (ten, gia, soluong, ram, bonho, mota, hang, hinhanh) 
                        VALUES ('$tensp', '$gia', '$soluong', '$ram', '$bonho', '$mota', '$hang', '$image_name')";
-        $msg = "Thêm mới sản phẩm thành công!";
+        $status_redirect = "add_success";
     }
 
     if (mysqli_query($conn, $sql_action)) {
-        echo "<script>alert('$msg'); window.location.href='admin.php?action=sanpham';</script>";
+        header("Location: admin.php?action=sanpham&status=" . $status_redirect);
+        exit();
     } else {
-        echo "<script>alert('Lỗi xử lý dữ liệu!');</script>";
+        header("Location: admin.php?action=sanpham&status=error");
+        exit();
     }
 }
 
@@ -77,9 +79,11 @@ if (isset($_GET['delete_sp'])) {
     
     $sql_del = "DELETE FROM sanpham WHERE id = '$id_del'";
     if (mysqli_query($conn, $sql_del)) {
-        echo "<script>alert('Đã xóa sản phẩm khỏi hệ thống thành công!'); window.location.href='admin.php?action=sanpham';</script>";
+        header("Location: admin.php?action=sanpham&status=deleted_success");
+        exit();
     } else {
-        echo "<script>alert('Không thể xóa sản phẩm do vướng ràng buộc đơn hàng!'); window.location.href='admin.php?action=sanpham';</script>";
+        header("Location: admin.php?action=sanpham&status=delete_error");
+        exit();
     }
 }
 
@@ -182,7 +186,7 @@ $list_products = mysqli_query($conn, "SELECT * FROM sanpham ORDER BY id DESC");
                             <th width="35%">Thông tin sản phẩm</th>
                             <th width="18%" class="text-end">Giá bán</th>
                             <th width="12%" class="text-center">Kho hàng</th>
-                            <th width="25%" class="text-center">Hành động</th> <!-- Tăng độ rộng cột hành động lên 25% để không bị vỡ nút -->
+                            <th width="25%" class="text-center">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -221,12 +225,12 @@ $list_products = mysqli_query($conn, "SELECT * FROM sanpham ORDER BY id DESC");
                                         <i class="fa-solid fa-pen-to-square"></i> Sửa
                                     </a>
                                     
-                                    <!-- Nút Xóa -->
-                                    <a href="admin.php?action=sanpham&delete_sp=<?= $row['id'] ?>" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm [ <?= htmlspecialchars($row['ten']) ?> ] và dọn sạch sản phẩm này khỏi giỏ hàng của khách?')" title="Xóa sản phẩm">
+                                    <!-- Nút Xóa (Đã chuyển sang dùng SweetAlert2) -->
+                                    <button type="button" class="btn btn-sm btn-outline-danger shadow-sm" onclick="confirmDeleteSP(<?= $row['id'] ?>, '<?= htmlspecialchars($row['ten'], ENT_QUOTES) ?>')" title="Xóa sản phẩm">
                                         <i class="fa-solid fa-trash"></i> Xóa
-                                    </a>
+                                    </button>
 
-                                    <!-- Nút Hiện/Ẩn (Đã sửa lại class chuẩn Bootstrap) -->
+                                    <!-- Nút Hiện/Ẩn -->
                                     <?php if(isset($row['hienthi']) && $row['hienthi'] == 0){ ?>
                                         <a href="lay.php?id=<?= $row['id'] ?>&action=show" class="btn btn-sm btn-outline-success shadow-sm" title="Hiện sản phẩm">
                                             <i class="fa-solid fa-eye"></i> Hiện
@@ -251,3 +255,70 @@ $list_products = mysqli_query($conn, "SELECT * FROM sanpham ORDER BY id DESC");
         </div>
     </div>
 </div>
+
+<!-- Đảm bảo đã nạp thư viện SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Cấu hình hàm xác nhận xóa bằng SweetAlert2 -->
+<script>
+function confirmDeleteSP(id, name) {
+    Swal.fire({
+        title: 'Xác nhận xóa?',
+        text: `Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm [ ${name} ] khỏi hệ thống?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Đồng ý xóa',
+        cancelButtonText: 'Hủy'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = 'admin.php?action=sanpham&delete_sp=' + id;
+        }
+    });
+}
+</script>
+
+<!-- XỬ LÝ THÔNG BÁO TOAST NẰM BÊN PHẢI VÀ TỰ MẤT SAU 3 GIÂY -->
+<?php if (isset($_GET['status'])): ?>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let titleMsg = '';
+    let iconMsg = 'success';
+
+    <?php if ($_GET['status'] == 'deleted_success'): ?>
+        titleMsg = 'Đã xóa sản phẩm thành công!';
+        iconMsg = 'success';
+    <?php elseif ($_GET['status'] == 'delete_error'): ?>
+        titleMsg = 'Không thể xóa sản phẩm do vướng ràng buộc đơn hàng!';
+        iconMsg = 'error';
+    <?php elseif ($_GET['status'] == 'add_success'): ?>
+        titleMsg = 'Thêm mới sản phẩm thành công!';
+        iconMsg = 'success';
+    <?php elseif ($_GET['status'] == 'update_success'): ?>
+        titleMsg = 'Cập nhật sản phẩm thành công!';
+        iconMsg = 'success';
+    <?php elseif ($_GET['status'] == 'error'): ?>
+        titleMsg = 'Lỗi xử lý dữ liệu!';
+        iconMsg = 'error';
+    <?php endif; ?>
+
+    if (titleMsg !== '') {
+        Swal.fire({
+            toast: true,
+            position: 'top-right',
+            icon: iconMsg,
+            title: titleMsg,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+
+    // Tự động gỡ tham số status khỏi URL để khi F5 không hiện lại thông báo
+    const url = new URL(window.location.href);
+    url.searchParams.delete('status');
+    window.history.replaceState({}, document.title, url.toString());
+});
+</script>
+<?php endif; ?>

@@ -3,14 +3,44 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+// Hàm bổ trợ hiển thị thông báo Toast bằng SweetAlert2 và quay lại trang trước
+function showToastAndBack($icon, $title) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    </head>
+    <body>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-right',
+                    icon: '<?= $icon ?>',
+                    title: '<?= addslashes($title) ?>',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                }).then(function() {
+                    window.history.back();
+                });
+            });
+        </script>
+    </body>
+    </html>
+    <?php
+    exit();
+}
+
 $conn = mysqli_connect("localhost", "root", "", "hoahuongduongphone");
 if (!$conn) {
     die("Kết nối database thất bại");
 }
 
 if (!isset($_SESSION['user_id'])) {
-    echo "<script>alert('Vui lòng đăng nhập!'); window.history.back();</script>";
-    exit();
+    showToastAndBack('warning', 'Vui lòng đăng nhập!');
 }
 
 $iduser      = intval($_SESSION['user_id']);
@@ -18,8 +48,7 @@ $id_binhluan = isset($_POST['id_binhluan']) ? (int)$_POST['id_binhluan'] : 0;
 $noidung_moi = isset($_POST['noidung_moi']) ? mysqli_real_escape_string($conn, trim($_POST['noidung_moi'])) : '';
 
 if (empty($noidung_moi)) {
-    echo "<script>alert('Nội dung không được để trống!'); window.history.back();</script>";
-    exit();
+    showToastAndBack('warning', 'Nội dung không được để trống!');
 }
 
 // -----------------------------------------------------------------
@@ -30,13 +59,11 @@ $query_check = mysqli_query($conn, $sql_check);
 $row = mysqli_fetch_assoc($query_check);
 
 if (!$row) {
-    echo "<script>alert('Bình luận không tồn tại!'); window.history.back();</script>";
-    exit();
+    showToastAndBack('error', 'Bình luận không tồn tại!');
 }
 
 if ($row['solansua'] >= 1) {
-    echo "<script>alert('Bạn đã hết lượt chỉnh sửa! (Mỗi bình luận chỉ được sửa 1 lần).'); window.history.back();</script>";
-    exit();
+    showToastAndBack('warning', 'Bạn đã hết lượt chỉnh sửa! (Mỗi bình luận chỉ được sửa 1 lần).');
 }
 
 // -----------------------------------------------------------------
@@ -47,10 +74,10 @@ $sql_update = "UPDATE binhluan
                WHERE id = '$id_binhluan' AND id_taikhoan = '$iduser'";
 
 if (mysqli_query($conn, $sql_update)) {
-    echo "<script>alert('Chỉnh sửa bình luận thành công!'); window.history.back();</script>";
+    showToastAndBack('success', 'Chỉnh sửa bình luận thành công!');
 } else {
-    echo "<script>alert('Lỗi cập nhật bình luận!'); window.history.back();</script>";
+    showToastAndBack('error', 'Lỗi cập nhật bình luận!');
 }
 
 mysqli_close($conn);
-?> 
+?>

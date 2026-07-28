@@ -11,11 +11,12 @@ if (isset($_POST['capnhat_trangthai'])) {
     $trangthai_moi = mysqli_real_escape_string($conn, $_POST['trangthai']);
     
     $sql_update = "UPDATE donhang SET trangthai = '$trangthai_moi' WHERE id = '$id_dh'";
-    if(mysqli_query($conn, $sql_update)) {
-        echo "<script>alert('Cập nhật trạng thái đơn hàng thành công!'); window.location.href='admin.php?action=donhang';</script>";
+    if (mysqli_query($conn, $sql_update)) {
+        // Chuyển hướng kèm trạng thái trên URL
+        header('Location: admin.php?action=donhang&status=update_success');
+        exit();
     }
 }
-
 // Tải danh sách đơn hàng toàn hệ thống
 $list_orders = mysqli_query($conn, "SELECT * FROM donhang ORDER BY ngaymua DESC");
 ?>
