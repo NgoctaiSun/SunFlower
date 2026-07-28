@@ -261,6 +261,23 @@ if ($iduser > 0) {
                                         <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
+
+                                <!-- ĐÃ BỔ SUNG: Hiển thị phản hồi từ Quản trị viên (Admin) -->
+                                <?php if (!empty($dg['traloi_admin'])): ?>
+                                    <div class="mt-2 p-3 bg-light border-start border-4 border-success rounded-3 shadow-sm ms-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="fw-bold text-success small">
+                                                <i class="fa-solid fa-user-shield me-1"></i>Phản hồi từ Quản trị viên
+                                            </span>
+                                            <?php if (!empty($dg['ngay_traloi'])): ?>
+                                                <span class="text-muted" style="font-size: 11px;">
+                                                    <i class="fa-regular fa-clock me-1"></i><?= date("d/m/Y H:i", strtotime($dg['ngay_traloi'])) ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <p class="mb-0 text-dark small" style="line-height: 1.5;"><?= nl2br(htmlspecialchars($dg['traloi_admin'])) ?></p>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                             <?php endwhile; ?>
                         </div>

@@ -1,5 +1,5 @@
 <?php
-include_once '../pages/connect.php';
+include_once '../connect.php';
 if (!isset($conn)) {
     $conn = mysqli_connect("localhost", "root", "", "hoahuongduongphone");
 }
@@ -25,11 +25,11 @@ $result = mysqli_query($conn, $sql);
                     <tr>
                         <th width="5%">ID</th>
                         <th width="15%">Khách hàng</th>
-                        <th width="20%">Sản phẩm</th>
+                        <th width="15%">Sản phẩm</th>
                         <th width="25%">Nội dung bình luận</th>
                         <th width="10%">Đánh giá</th>
-                        <th width="13%">Trạng thái</th>
-                        <th width="12%" class="text-center">Hành động</th>
+                        <th width="12%">Trạng thái</th>
+                        <th width="18%" class="text-center">Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,7 +39,16 @@ $result = mysqli_query($conn, $sql);
                             <td class="fw-bold text-secondary">#<?= $row['id'] ?></td>
                             <td class="fw-semibold text-dark"><?= htmlspecialchars($row['ten_taikhoan']) ?></td>
                             <td class="text-primary fw-medium"><?= htmlspecialchars($row['ten_sanpham']) ?></td>
-                            <td><p class="mb-0 text-muted small" style="max-width: 300px;"><?= htmlspecialchars($row['noidung']) ?></p></td>
+                            <td>
+                                <p class="mb-1 text-muted small" style="max-width: 300px;"><?= htmlspecialchars($row['noidung']) ?></p>
+                                
+                                <!-- ĐÃ BỔ SUNG: Hiển thị phản hồi cũ của Admin nếu có -->
+                                <?php if (!empty($row['traloi_admin'])): ?>
+                                    <div class="p-2 bg-light border-start border-3 border-success rounded text-dark small mt-1">
+                                        <strong class="text-success"><i class="fa-solid fa-reply me-1"></i>Admin:</strong> <?= htmlspecialchars($row['traloi_admin']) ?>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <span class="text-warning fw-bold">
                                     <?= $row['sosao'] ?> <i class="fa-solid fa-star text-warning"></i>
@@ -54,6 +63,13 @@ $result = mysqli_query($conn, $sql);
                             </td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
+                                    <!-- ĐÃ BỔ SUNG: Nút Mở Modal Trả lời bình luận -->
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            onclick="openReplyModal(<?= $row['id'] ?>, '<?= htmlspecialchars(addslashes($row['traloi_admin'] ?? '')) ?>')"
+                                            title="Trả lời bình luận">
+                                        <i class="fa-solid fa-reply"></i>
+                                    </button>
+
                                     <!-- Nút Ẩn / Hiện bình luận cho Admin -->
                                     <a href="kiemsoat_binhluan.php?action=toggle_status&id=<?= $row['id'] ?>&current=<?= $row['trangthai'] ?>" 
                                        class="btn btn-sm <?= ($row['trangthai'] == '1' || $row['trangthai'] == 'Hiển thị') ? 'btn-outline-warning' : 'btn-outline-success' ?>" 
@@ -82,3 +98,37 @@ $result = mysqli_query($conn, $sql);
         </div>
     </div>
 </div>
+
+<!-- ĐÃ BỔ SUNG: MODAL POPUP ADMIN TRẢ LỜI BÌNH LUẬN -->
+<div class="modal fade" id="modalTraLoiBinhLuan" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-reply me-2"></i>Trả lời bình luận</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="xuly_traloibinhluan.php" method="POST">
+          <div class="modal-body p-4">
+            <input type="hidden" name="id_binhluan" id="reply_id_binhluan">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nội dung phản hồi từ Admin:</label>
+                <textarea class="form-control" name="traloi_admin" id="reply_noidung" rows="4" placeholder="Nhập câu trả lời của shop..." required></textarea>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Hủy</button>
+            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">Gửi phản hồi</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openReplyModal(id, currentReply) {
+    document.getElementById('reply_id_binhluan').value = id;
+    document.getElementById('reply_noidung').value = currentReply;
+    var replyModal = new bootstrap.Modal(document.getElementById('modalTraLoiBinhLuan'));
+    replyModal.show();
+}
+</script>
