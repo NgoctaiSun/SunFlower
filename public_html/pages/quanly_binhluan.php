@@ -13,6 +13,9 @@ $sql = "SELECT b.*, t.ten AS ten_taikhoan, s.ten AS ten_sanpham
 $result = mysqli_query($conn, $sql);
 ?>
 
+<!-- Thư viện SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <div class="container-fluid my-4">
     <div class="card shadow-sm border-0 rounded-3 bg-white p-4">
         <h3 class="text-success fw-bold mb-4">
@@ -42,7 +45,6 @@ $result = mysqli_query($conn, $sql);
                             <td>
                                 <p class="mb-1 text-muted small" style="max-width: 300px;"><?= htmlspecialchars($row['noidung']) ?></p>
                                 
-                                <!-- ĐÃ BỔ SUNG: Hiển thị phản hồi cũ của Admin nếu có -->
                                 <?php if (!empty($row['traloi_admin'])): ?>
                                     <div class="p-2 bg-light border-start border-3 border-success rounded text-dark small mt-1">
                                         <strong class="text-success"><i class="fa-solid fa-reply me-1"></i>Admin:</strong> <?= htmlspecialchars($row['traloi_admin']) ?>
@@ -63,27 +65,26 @@ $result = mysqli_query($conn, $sql);
                             </td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
-                                    <!-- ĐÃ BỔ SUNG: Nút Mở Modal Trả lời bình luận -->
+                                    <!-- Nút Trả lời bình luận -->
                                     <button type="button" class="btn btn-sm btn-outline-primary" 
                                             onclick="openReplyModal(<?= $row['id'] ?>, '<?= htmlspecialchars(addslashes($row['traloi_admin'] ?? '')) ?>')"
                                             title="Trả lời bình luận">
                                         <i class="fa-solid fa-reply"></i>
                                     </button>
 
-                                    <!-- Nút Ẩn / Hiện bình luận cho Admin -->
+                                    <!-- Nút Ẩn / Hiện bình luận -->
                                     <a href="kiemsoat_binhluan.php?action=toggle_status&id=<?= $row['id'] ?>&current=<?= $row['trangthai'] ?>" 
                                        class="btn btn-sm <?= ($row['trangthai'] == '1' || $row['trangthai'] == 'Hiển thị') ? 'btn-outline-warning' : 'btn-outline-success' ?>" 
                                        title="<?= ($row['trangthai'] == '1' || $row['trangthai'] == 'Hiển thị') ? 'Ẩn bình luận này' : 'Hiện bình luận này' ?>">
                                         <i class="fa-solid <?= ($row['trangthai'] == '1' || $row['trangthai'] == 'Hiển thị') ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
                                     </a>
 
-                                    <!-- Nút Xóa bình luận -->
-                                    <a href="kiemsoat_binhluan.php?action=delete&id=<?= $row['id'] ?>" 
-                                       class="btn btn-sm btn-outline-danger" 
-                                       title="Xóa vĩnh viễn"
-                                       onclick="return confirm('Bạn có chắc muốn xóa vĩnh viễn đánh giá này không?')">
+                                    <!-- Nút Xóa bình luận với Popup SweetAlert2 -->
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            title="Xóa vĩnh viễn"
+                                            onclick="confirmDelete(<?= $row['id'] ?>)">
                                         <i class="fa-solid fa-trash"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -99,7 +100,7 @@ $result = mysqli_query($conn, $sql);
     </div>
 </div>
 
-<!-- ĐÃ BỔ SUNG: MODAL POPUP ADMIN TRẢ LỜI BÌNH LUẬN -->
+<!-- MODAL POPUP ADMIN TRẢ LỜI BÌNH LUẬN -->
 <div class="modal fade" id="modalTraLoiBinhLuan" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content rounded-3">
@@ -125,6 +126,25 @@ $result = mysqli_query($conn, $sql);
 </div>
 
 <script>
+// Hàm xác nhận trước khi xóa
+function confirmDelete(id) {
+    Swal.fire({
+        title: 'Xác nhận xóa?',
+        text: "Bạn có chắc chắn muốn xóa vĩnh viễn đánh giá này không?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Đồng ý xóa',
+        cancelButtonText: 'Hủy'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = 'kiemsoat_binhluan.php?action=delete&id=' + id;
+        }
+    });
+}
+
+// Hàm mở Modal Trả lời
 function openReplyModal(id, currentReply) {
     document.getElementById('reply_id_binhluan').value = id;
     document.getElementById('reply_noidung').value = currentReply;
@@ -132,3 +152,32 @@ function openReplyModal(id, currentReply) {
     replyModal.show();
 }
 </script>
+
+<!-- XỬ LÝ THÔNG BÁO TOAST NẰM BÊN PHẢI VÀ TỰ MẤT SAU 3 GIÂY -->
+<?php if (isset($_GET['status'])): ?>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    <?php if ($_GET['status'] == 'toggled_success'): ?>
+        // Thông báo Toast nằm phía trên bên góc phải, tự biến mất sau 3 giây
+        Swal.fire({
+            toast: true,
+            position: 'top-right',
+            icon: 'success',
+            title: 'Thay đổi !',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    <?php elseif ($_GET['status'] == 'deleted_success'): ?>
+        // Thông báo Popup giữa màn hình khi xóa
+        Swal.fire({
+            icon: 'success',
+            title: 'Đã xóa!',
+            text: 'Bình luận đã được xóa vĩnh viễn.',
+            confirmButtonColor: '#198754',
+            confirmButtonText: 'Đồng ý'
+        });
+    <?php endif; ?>
+});
+</script>
+<?php endif; ?>
