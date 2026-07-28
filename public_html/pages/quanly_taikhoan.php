@@ -4,7 +4,7 @@ if (!isset($conn)) {
     $conn = mysqli_connect("localhost", "root", "", "hoahuongduongphone");
 }
 
-$sql = "SELECT * FROM taikhoan ORDER BY id DESC";
+$sql = "SELECT * FROM taikhoan WHERE vaitro != 'admin' ORDER BY id DESC";
 $result = mysqli_query($conn, $sql);
 ?>
 

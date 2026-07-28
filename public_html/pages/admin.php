@@ -47,7 +47,7 @@ if(mysqli_num_rows($check_lh) > 0) {
 // Kiểm tra và đếm thành viên
 $check_tk = mysqli_query($conn, "SHOW TABLES LIKE 'taikhoan'");
 if(mysqli_num_rows($check_tk) > 0) {
-    $total_members = mysqli_num_rows(mysqli_query($conn, "SELECT id FROM taikhoan"));
+    $total_members = mysqli_num_rows(mysqli_query($conn, "SELECT id FROM taikhoan WHERE vaitro != 'admin'"));
 }
 
 // Lấy danh sách mới nhất cho Dashboard
